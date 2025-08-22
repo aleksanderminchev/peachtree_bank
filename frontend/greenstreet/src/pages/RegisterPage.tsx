@@ -6,6 +6,7 @@ import {
   TextField,
   Button,
   Box,
+  Stack,
 } from "@mui/material";
 
 export default function LoginPage() {
@@ -15,12 +16,17 @@ export default function LoginPage() {
         <Card>
           <CardHeader>Login</CardHeader>
           <CardContent>
+            <Stack direction={'column'} spacing={2}>
+            <TextField label="Email" type="text"></TextField>
+
             <TextField label="Username" type="text"></TextField>
             <TextField label="Password" type="password"></TextField>
-            <Button onClick={() => {}}>Forgot password?</Button>
+            <TextField label="Confirm password" type="password"></TextField>
+
+            </Stack>
           </CardContent>
           <CardActions>
-            <Button onClick={() => {}}>Login</Button>
+            <Button onClick={() => {}}>Register</Button>
           </CardActions>
         </Card>
       </Box>
