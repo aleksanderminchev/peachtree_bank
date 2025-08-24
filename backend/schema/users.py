@@ -1,13 +1,8 @@
-import re
-import phonenumbers
-
-from marshmallow import validate, validates, ValidationError, fields, validates_schema
-
 from app import ma
 from models.user import User
 
 
-class UserSchema(ma.SQLAlchemySchema):
+class UserSchema(ma.Schema):
     class Meta:
         model = User
         ordered = True
@@ -17,7 +12,7 @@ class UserSchema(ma.SQLAlchemySchema):
     is_verified = ma.Boolean(dump_only=True)
 
 
-class LoginSchema(ma.SQSQLAlchemySchema):
+class LoginSchema(ma.Schema):
     class Meta:
         model = User
         ordered = True
@@ -26,7 +21,7 @@ class LoginSchema(ma.SQSQLAlchemySchema):
     password = ma.String(required=True)
 
 
-class RegisterSchema(ma.SQSQLAlchemySchema):
+class RegisterSchema(ma.Schema):
     class Meta:
         model = User
         ordered = True

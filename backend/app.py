@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 
@@ -44,5 +44,7 @@ def create_app(config_name="development"):
     @app.route("/hello")
     def hello():
         return "Hello, World!"
+
+    # Middleware to add new tokens to response headers/cookies
 
     return app

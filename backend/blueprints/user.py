@@ -1,8 +1,13 @@
-from flask import Blueprint, response, body, authenticate
+from flask import Blueprint, abort, request
+from apifairy import authenticate, body, response, other_responses
+
 from models.user import User
 from models.token import Token
 from schema.users import UserSchema, LoginSchema, RegisterSchema
+from schema.tokens import TokenSchema
 from auth import token_auth
+from app import db
+from utils.utils import get_date
 
 users = Blueprint("users", __name__)
 
@@ -19,7 +24,11 @@ def login(args):
     result = user.verify_password(password)
     if not result:
         return {"error": "Incorrect password"}, 403
-    return Token(user=user.uid)
+    token = Token(user=user.uid)
+    db.session.add(token)
+    db.session.commit()
+    raw_token = token.generate_tokens()
+    return Token.token_response(raw_token)
 
 
 @users.route("/get_user", methods=["GET"])
@@ -40,6 +49,31 @@ def register():
     password = args.get("password", None)
     confirm_password = args.get("confirm_password", None)
     pass
+
+
+@users.route("/tokens", methods=["PUT"])
+@response(TokenSchema, description="Newly issued access and refresh tokens")
+def refresh(args):
+    """Refresh an access token"""
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        return {"error": "Unauthorized"}, 403
+    # Get token object
+    token_obj = Token.get_token_by_refresh_token(refresh_token)
+    if not token_obj:
+        return {"error": "Invalid refresh token"}, 403
+
+    # Check if token is expired
+    if get_date() >= token_obj.refresh_expiration:
+        return {"error": "Refresh token expired"}, 403
+
+    # Verify the user still exists
+    user = User.query.get(token_obj.user_id)
+    if not user:
+        return {"error": "User not found"}, 403
+
+    # Issue new tokens for this user
+    return Token.token_response(refresh_token)
 
 
 @users.route("/forgot_password", methods=["POST"])
