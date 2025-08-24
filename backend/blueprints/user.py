@@ -45,10 +45,49 @@ def get_user(args):
 @body(RegisterSchema)
 @response(UserSchema)
 def register():
-    username = args.get("username", None)
-    password = args.get("password", None)
-    confirm_password = args.get("confirm_password", None)
-    pass
+    """
+    Register a new user
+    Expected JSON payload:
+    {
+        "username": "string",
+        "password": "string",
+        "confirm_password": "string",
+        "email": "string",
+        "first_name": "string" (optional),
+        "last_name": "string" (optional)
+    }
+    """
+    try:
+        # Get validated data from the body decorator
+        validated_data = request.validated_data
+
+        # Extract fields
+        username = validated_data.get("username")
+        password = validated_data.get("password")
+        email = validated_data.get("email")
+        first_name = validated_data.get("first_name", "")
+        last_name = validated_data.get("last_name", "")
+
+        # Create new user instance
+        new_user = User(
+            username=username,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            is_active=True,
+        )
+
+        # Add to database
+        db.session.add(new_user)
+        db.session.commit()
+
+        # Return the created user (will be serialized by @response decorator)
+        return new_user
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Registration failed: {str(e)}"}), 500
 
 
 @users.route("/tokens", methods=["PUT"])
