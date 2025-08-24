@@ -18,7 +18,7 @@ class Token(BaseModel):
     refresh_expiration = db.Column(db.DateTime, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("users.uid"), index=True)
 
-    user = db.relationship("User", back_populates="tokens")
+    user = db.relationship("User", backref="tokens")
 
     def __init__(self, user_id, **kwargs):
         super().__init__(**kwargs)

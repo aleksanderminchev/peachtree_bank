@@ -13,4 +13,4 @@ class Contractor(BaseModel):
 
     def __init__(self, name=None, **kwargs):
         super().__init__(**kwargs)
-        self.user_id = name
+        self.name = name

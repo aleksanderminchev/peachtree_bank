@@ -15,7 +15,6 @@ class Transaction(BaseModel):  # type:ignore
 
     __tablename__ = "transactions"
     uid = db.Column(db.Integer, primary_key=True)
-    hashed_id = db.Column(db.String(256), nullable=False)
     status = db.Column(
         db.Enum(TransactionStatus, values_callable=lambda obj: [e.value for e in obj]),
         nullable=False,
@@ -25,7 +24,7 @@ class Transaction(BaseModel):  # type:ignore
     )
     sent_at = db.Column(db.DateTime, nullable=True, index=True)
     payed_at = db.Column(db.DateTime, nullable=True, index=True)
-    received_at = db.Column(db.DateTime, nullable=False, index=True)
+    received_at = db.Column(db.DateTime, nullable=True, index=True)
 
     currency = db.Column(
         db.Enum(CurrencyEnum, values_callable=lambda obj: [e.value for e in obj]),

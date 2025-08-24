@@ -1,8 +1,8 @@
 from flask import Blueprint, abort, request
 from apifairy import authenticate, body, response, other_responses
+from models.token import Token
 
 from models.user import User
-from models.token import Token
 from schema.users import UserSchema, LoginSchema, RegisterSchema
 from schema.tokens import TokenSchema
 from auth import token_auth
