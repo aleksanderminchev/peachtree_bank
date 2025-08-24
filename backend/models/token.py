@@ -104,6 +104,7 @@ class Token(BaseModel):
         except Exception as e:
             raise ValueError(f"Failed to encode refresh token: {str(e)}")
 
+    @classmethod
     def decode_access_token(self, jwt_token=None):
         """
         Decode access token JWT
@@ -118,8 +119,6 @@ class Token(BaseModel):
             jwt.ExpiredSignatureError: Token is expired
             jwt.InvalidTokenError: Token is invalid
         """
-        if jwt_token is None:
-            jwt_token = self.get_access_jwt()
 
         return jwt.decode(
             jwt_token,
@@ -177,19 +176,3 @@ class Token(BaseModel):
     def find_by_refresh_token(cls, refresh_token):
         """Find token by refresh token value"""
         return cls.query.filter_by(refresh_token=refresh_token).first()
-
-    def get_allowed_update_fields(self):
-        """Only allow updating expiration times"""
-        return {"access_expiration", "refresh_expiration"}
-
-    def validate_update(self, updates):
-        """Validate token updates"""
-        now = get_date()
-
-        if "access_expiration" in updates:
-            if updates["access_expiration"] <= now:
-                raise ValueError("Access expiration must be in the future")
-
-        if "refresh_expiration" in updates:
-            if updates["refresh_expiration"] <= now:
-                raise ValueError("Refresh expiration must be in the future")

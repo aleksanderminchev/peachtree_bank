@@ -47,6 +47,6 @@ class Transaction(BaseModel):  # type:ignore
     # One Contractor to Many transactions relation
     contractor = db.relationship("Contractor", backref="transactions")
 
-    @staticmethod
+    @classmethod
     def get_transaction_by_id(id):
         return Transaction.query.get(id)

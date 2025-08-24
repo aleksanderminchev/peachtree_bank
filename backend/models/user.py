@@ -18,8 +18,8 @@ class User(BaseModel):
     # general
     uid = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(120), nullable=False, unique=True, index=True)
+    email = db.Column(db.String(120), nullable=True)
     password_hash = db.Column(db.String(256), nullable=False)
-
     is_verified = db.Column(
         db.Boolean,
         default=False,
@@ -51,5 +51,9 @@ class User(BaseModel):
 
         return username
 
-    def verify_password(self, password):  # Verifies the hashed password
+    def verify_password(self, password: str):  # Verifies the hashed password
         return check_password_hash(self.password_hash, password)
+
+    @classmethod
+    def get_user_by_username(username: str):
+        return User.query.filter(User.username == username).first()

@@ -2,12 +2,14 @@ import os
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
 
 from flask_migrate import Migrate
 from config import config
 
 db = SQLAlchemy()
 migrate = Migrate()
+ma = Marshmallow()
 
 
 def create_app(config_name="development"):
@@ -18,14 +20,20 @@ def create_app(config_name="development"):
 
     db.init_app(app)
     migrate.init_app(app, db)
+    ma.init_app(app)
+
     from commands import commands
+    from blueprints.user import users
+
+    # import here to allow for migration tracking to trigger
     from models.contractors import Contractor
     from models.transactions import Transaction
     from models.balance import Balance
     from models.user import User
 
-    app.register_blueprint(commands)
-    # ensure the instance folder exists
+    # register api routes
+    app.register_blueprint(commands, url_prefix="/api")
+    app.register_blueprint(users, url_prefix="/api")
     try:
         os.makedirs(app.instance_path)
     except OSError:
