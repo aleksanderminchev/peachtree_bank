@@ -14,3 +14,7 @@ class Contractor(BaseModel):
     def __init__(self, name=None, **kwargs):
         super().__init__(**kwargs)
         self.name = name
+
+    @staticmethod
+    def find_by_name(name):
+        return Contractor.query.filter(Contractor.name == f"%{name}%").first()

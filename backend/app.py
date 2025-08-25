@@ -24,7 +24,7 @@ def create_app(config_name="development"):
 
     from commands import commands
     from blueprints.user import users
-
+    from blueprints.transactions import transactions
     # import here to allow for migration tracking to trigger
     from models.contractors import Contractor
     from models.transactions import Transaction
@@ -35,6 +35,7 @@ def create_app(config_name="development"):
     # register api routes
     app.register_blueprint(commands, url_prefix="/api")
     app.register_blueprint(users, url_prefix="/api")
+    app.register_blueprint(transactions, url_prefix="/api")
     try:
         os.makedirs(app.instance_path)
     except OSError:
