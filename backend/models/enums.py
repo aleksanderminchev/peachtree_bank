@@ -17,8 +17,8 @@ class TransactionStatus(enum.Enum):
     """
 
     SENT = "sent"
-    RECEIVED = "refund"
-    PAYED = "payment"
+    RECEIVED = "received"
+    PAYED = "payed"
 
 
 class MethodEnum(enum.Enum):
