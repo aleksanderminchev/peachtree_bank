@@ -24,40 +24,40 @@ class Token(BaseModel):
         super().__init__(**kwargs)
         self.user_id = user_id
 
-    def generate_tokens(
-        self,
-        refresh_days=30,
-    ):
-        """Generate both raw tokens and JWTs"""
+    @staticmethod
+    def generate_tokens():
+        """Generate  tokens"""
 
         # Step 1: generate raw random token
         refresh_token_raw = secrets.token_urlsafe(32)
-        # Set expiration times automatically
 
-        now = get_date()
-        self.refresh_expiration = now + timedelta(days=refresh_days)
         # Step 2: hash it for DB storage (SHA-256)
         refresh_token_hash = hashlib.sha256(refresh_token_raw.encode()).hexdigest()
-        self.refresh_token = refresh_token_hash
-        return refresh_token_raw
 
-    @classmethod
-    def get_token_by_refresh_token(cls, candidate_token: str):
+        return refresh_token_raw, refresh_token_hash
+
+    def set_refresh_token_date(self, refresh_days=30):
+        now = get_date()
+        self.refresh_expiration = now + timedelta(days=refresh_days)
+        db.session.commit()
+
+    @staticmethod
+    def get_token_by_refresh_token(candidate_token: str):
         """
         Get token object by refresh token hash, regardless of expiration.
         Returns the token object if found, None if not found.
         """
         candidate_hash = hashlib.sha256(candidate_token.encode()).hexdigest()
-        return cls.query.filter(cls.refresh_token == candidate_hash).first()
+        return Token.query.filter(Token.refresh_token == candidate_hash).first()
 
     def get_access_jwt(self):
         """Generate JWT for access token"""
         try:
+            print("secret_ley", current_app.config["SECRET_KEY"])
             return jwt.encode(
                 {
-                    "token": self.access_token,
-                    "user_id": self.user_id,
-                    "exp": self.access_expiration.timestamp(),
+                    "token": secrets.token_urlsafe(),
+                    "exp": (get_date() + timedelta(minutes=15)).timestamp(),
                 },
                 current_app.config["SECRET_KEY"],
                 algorithm="HS256",
@@ -123,24 +123,23 @@ class Token(BaseModel):
         """Find token by refresh token value"""
         return cls.query.filter_by(refresh_token=refresh_token).first()
 
-    @classmethod
-    def token_response(cls, token):
+    @staticmethod
+    def token_response(token_db, token_raw):
         headers = {}
-        if current_app.config["REFRESH_TOKEN_IN_COOKIE"]:
-            domain = None
-            if current_app.config["ENV_NAME"] == "production":
-                domain = "fake_domain.com"
+        domain = None
+        if current_app.config["ENV_NAME"] == "production":
+            domain = "fake_domain.com"
 
-            headers["Set-Cookie"] = dump_cookie(
-                "refresh_token",
-                token,
-                secure=True,
-                httponly=True,
-                samesite="none",
-                domain=domain,
-            )
-        access_token = token.get_access_jwt()
-
+        headers["Set-Cookie"] = dump_cookie(
+            "refresh_token",
+            token_raw,
+            secure=True,
+            httponly=True,
+            samesite="none",
+            domain=domain,
+        )
+        access_token = token_db.get_access_jwt()
+        print("access_token", access_token)
         return (
             {
                 "access_token": access_token,

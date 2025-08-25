@@ -5,6 +5,7 @@ export interface State {
   user: User | null;
   errors: string[];
   transactions: {
+    isLoading: boolean;
     transactionsPagination: {
       transaction: Transaction[];
       pagination: {
@@ -19,6 +20,7 @@ export interface State {
     transaction: Transaction | null;
   };
   contractors: {
+    isLoading: boolean;
     contractors: Contractor[];
   };
 }

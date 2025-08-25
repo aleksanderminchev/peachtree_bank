@@ -54,10 +54,10 @@ class User(BaseModel):
     def verify_password(self, password: str):  # Verifies the hashed password
         return check_password_hash(self.password_hash, password)
 
-    @classmethod
+    @staticmethod
     def get_user_by_username(username: str):
         return User.query.filter(User.username == username).first()
 
-    @classmethod
+    @staticmethod
     def get_user_by_id(user_id: int):
         return User.query.get(user_id)

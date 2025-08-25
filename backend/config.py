@@ -19,10 +19,12 @@ class Config(object):
     """
     Config File with all env configurations present_
     """
+    SECRET_KEY = os.environ.get("SECRET_KEY")
 
 
 class DevelopmentConfig(Config):
     ENV_NAME = "development"
+    SECRET_KEY = os.environ.get("SECRET_KEY")
     DEBUG = True
     # DEVELOPMENT DATABASE
     SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DATABASE_URI_DEV")

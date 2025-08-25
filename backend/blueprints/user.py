@@ -24,11 +24,13 @@ def login(args):
     result = user.verify_password(password)
     if not result:
         return {"error": "Incorrect password"}, 403
-    token = Token(user=user.uid)
+    raw_token, refresh_token_hash = Token.generate_tokens()
+    token = Token(user_id=user.uid, refresh_token=refresh_token_hash)
+    token.set_refresh_token_date()
     db.session.add(token)
     db.session.commit()
-    raw_token = token.generate_tokens()
-    return Token.token_response(raw_token)
+
+    return Token.token_response(token, raw_token)
 
 
 @users.route("/get_user", methods=["GET"])
@@ -112,7 +114,7 @@ def refresh(args):
         return {"error": "User not found"}, 403
 
     # Issue new tokens for this user
-    return Token.token_response(refresh_token)
+    return Token.token_response(token_obj, refresh_token)
 
 
 @users.route("/forgot_password", methods=["POST"])

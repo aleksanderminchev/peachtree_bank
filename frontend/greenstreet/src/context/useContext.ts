@@ -5,6 +5,7 @@ export const initialState: State = {
   user: null,
   errors: [],
   transactions: {
+    isLoading: false,
     transactionsPagination: {
       transaction: [],
       pagination: {
@@ -19,6 +20,7 @@ export const initialState: State = {
     transaction: null,
   },
   contractors: {
+    isLoading: false,
     contractors: [],
   },
 };
@@ -29,6 +31,7 @@ export type Action =
   | { type: "CLEAR_ERRORS" }
   | { type: "SET_CONTRACTORS"; payload: any }
   | { type: "SET_TRANSACTION"; payload: any }
+  | { type: "SET_TRANSACTIONS"; payload: any }
   | { type: "RESET" };
 
 // Reducer function
@@ -41,7 +44,18 @@ export const taskReducer = (state: State, action: Action): State => {
     case "CLEAR_ERRORS":
       return { ...state, errors: [] };
     case "SET_CONTRACTORS":
-      return { ...state, contractors: { contractors: action.payload } };
+      return {
+        ...state,
+        contractors: { isLoading: false, contractors: action.payload },
+      };
+    case "SET_TRANSACTIONS":
+      return {
+        ...state,
+        transactions: {
+          ...state.transactions,
+          transactionsPagination: action.payload,
+        },
+      };
     case "SET_TRANSACTION":
       return {
         ...state,
