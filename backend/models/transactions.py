@@ -49,3 +49,15 @@ class Transaction(BaseModel):  # type:ignore
     @staticmethod
     def get_transaction_by_id(id):
         return Transaction.query.get(id)
+
+    def update(self, **kwargs):
+        status = kwargs["status"]
+        print("test")
+        match status:
+            case "sent":
+                self.sent_at = get_date()
+            case "payed":
+                self.payed_at = get_date()
+            case "received":
+                self.received_at = get_date()
+        super().update(commit=True, **kwargs)

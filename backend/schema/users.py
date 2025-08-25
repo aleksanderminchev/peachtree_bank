@@ -3,6 +3,7 @@ from models.user import User
 import re
 from marshmallow import Schema, fields, validates, ValidationError, post_load
 
+
 class UserSchema(ma.Schema):
     class Meta:
         model = User

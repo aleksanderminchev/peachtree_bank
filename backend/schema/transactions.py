@@ -6,6 +6,11 @@ from models.transactions import Transaction
 from models.contractors import Contractor
 
 
+class UpdateTransactionSchema(ma.Schema):
+    transaction_id = ma.Integer(required=False)
+    status = ma.String(required=False)
+
+
 class AddTransactionSchema(ma.Schema):
     currency = ma.String(required=False)
     contractor_id = ma.Integer(required=False)
@@ -35,12 +40,12 @@ class TransactionSchema(SQLAlchemyAutoSchema):
 
     # explicitly define fields if you want full control
     uid = auto_field()
-    status = auto_field()
     sent_at = auto_field()
     payed_at = auto_field()
     received_at = auto_field()
-    currency = auto_field()
     amount = auto_field()
-    method = auto_field()
     tracking_id = auto_field()
     contractor_id = auto_field()
+    status = fields.Function(lambda obj: obj.status.value)
+    currency = fields.Function(lambda obj: obj.currency.value)
+    method = fields.Function(lambda obj: obj.method.value)

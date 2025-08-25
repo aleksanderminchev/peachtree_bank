@@ -1,15 +1,14 @@
-from flask import Blueprint, request, jsonify
-from sqlalchemy import or_, and_
-from apifairy import authenticate, body, response, other_responses
-from sqlalchemy.orm import joinedload
-from app import db
+from flask import Blueprint
+from apifairy import authenticate
 from models.contractors import Contractor
 from schema.contractors import ContractorSchema
+from auth import token_auth
 
 contractors = Blueprint("contractors", __name__)
 
 
 @contractors.route("/get_contractors", methods=["GET"])
+@authenticate(token_auth)
 def get_contractors():
     schema = ContractorSchema(many=True)
     return schema.dump(Contractor.query.all())

@@ -29,7 +29,6 @@ def create_app(config_name="development"):
     # import here to allow for migration tracking to trigger
     from models.contractors import Contractor
     from models.transactions import Transaction
-    from models.balance import Balance
     from models.token import Token
     from models.user import User
 

@@ -1,7 +1,6 @@
 from flask import Blueprint
 from models.transactions import Transaction
 from models.user import User
-from models.balance import Balance
 from models.contractors import Contractor
 from models.token import Token
 from faker import Faker

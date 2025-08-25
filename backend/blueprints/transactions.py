@@ -1,17 +1,19 @@
 from flask import Blueprint, request, jsonify
-from sqlalchemy import or_, and_
-from apifairy import authenticate, body, response, other_responses
-
+from apifairy import authenticate, body
+from auth import token_auth
 from sqlalchemy.orm import joinedload
 from app import db
 from models.transactions import Transaction
-from schema.transactions import AddTransactionSchema, TransactionSchema
-from models.contractors import Contractor  # Assuming this exists
+from schema.transactions import (
+    AddTransactionSchema,
+    TransactionSchema,
+    UpdateTransactionSchema,
+)
+from models.contractors import Contractor 
 from models.enums import CurrencyEnum, TransactionStatus, MethodEnum
 from utils.utils import get_date
 import hashlib
 import uuid
-from datetime import datetime
 
 transactions = Blueprint("transactions", __name__)
 
@@ -19,6 +21,7 @@ transaction_schema = TransactionSchema()
 
 
 @transactions.route("/add_transaction", methods=["POST"])
+@authenticate(token_auth)
 @body(AddTransactionSchema)
 def add_transaction(data):
     """
@@ -81,6 +84,7 @@ def add_transaction(data):
 
 
 @transactions.route("/get_transaction/<int:id>", methods=["GET"])
+@authenticate(token_auth)
 def get_transaction(id):
     """
     Get a single transaction by ID
@@ -97,6 +101,7 @@ def get_transaction(id):
 
 
 @transactions.route("/get_transactions", methods=["GET"])
+# @authenticate(token_auth)
 def get_transactions():
     """
     Get transactions with search and sort functionality
@@ -187,125 +192,30 @@ def get_transactions():
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 
-@transactions.route("/update_transaction", methods=["PUT"])  # Fixed typo in route name
-def update_transaction():
+@transactions.route("/update_transaction", methods=["PUT"])
+@authenticate(token_auth)
+@body(UpdateTransactionSchema)
+def update_transaction(data):
     """
     Update an existing transaction
     Expected JSON payload:
     {
         "uid": int (required),
         "status": str (optional),
-        "sent_at": str (optional) - ISO format datetime,
-        "payed_at": str (optional) - ISO format datetime,
-        "tracking_id": str (optional),
-        "amount": float (optional),
-        "currency": str (optional),
-        "method": str (optional)
+
     }
     """
     try:
-        data = request.get_json()
-
-        if not data:
-            return jsonify({"error": "No JSON data provided"}), 400
-
-        if "uid" not in data:
-            return jsonify({"error": "Transaction uid is required"}), 400
-
-        transaction = Transaction.query.get(data["uid"])
+        transaction_id = data.get("transaction_id")
+        transaction = Transaction.query.get(transaction_id)
         if not transaction:
             return jsonify({"error": "Transaction not found"}), 404
 
-        # Update fields if provided
-        if "status" in data:
-            try:
-                status = TransactionStatus(data["status"])
-                transaction.status = status.value
-            except ValueError:
-                return jsonify({"error": f"Invalid status: {data['status']}"}), 400
-
-        if "sent_at" in data:
-            if data["sent_at"]:
-                try:
-                    transaction.sent_at = datetime.fromisoformat(
-                        data["sent_at"].replace("Z", "+00:00")
-                    )
-                except ValueError:
-                    return (
-                        jsonify({"error": "Invalid sent_at format. Use ISO format."}),
-                        400,
-                    )
-            else:
-                transaction.sent_at = None
-
-        if "payed_at" in data:
-            if data["payed_at"]:
-                try:
-                    transaction.payed_at = datetime.fromisoformat(
-                        data["payed_at"].replace("Z", "+00:00")
-                    )
-                except ValueError:
-                    return (
-                        jsonify({"error": "Invalid payed_at format. Use ISO format."}),
-                        400,
-                    )
-            else:
-                transaction.payed_at = None
-
-        if "tracking_id" in data:
-            transaction.tracking_id = data["tracking_id"]
-
-        if "amount" in data:
-            if data["amount"] <= 0:
-                return jsonify({"error": "Amount must be positive"}), 400
-            transaction.amount = data["amount"]
-
-        if "currency" in data:
-            try:
-                currency = CurrencyEnum(data["currency"])
-                transaction.currency = currency.value
-            except ValueError:
-                return jsonify({"error": f"Invalid currency: {data['currency']}"}), 400
-
-        if "method" in data:
-            try:
-                method = MethodEnum(data["method"])
-                transaction.method = method.value
-            except ValueError:
-                return jsonify({"error": f"Invalid method: {data['method']}"}), 400
-
+        transaction.update(**data)
         db.session.commit()
 
         return (
-            jsonify(
-                {
-                    "message": "Transaction updated successfully",
-                    "transaction": {
-                        "uid": transaction.uid,
-                        "status": transaction.status,
-                        "sent_at": (
-                            transaction.sent_at.isoformat()
-                            if transaction.sent_at
-                            else None
-                        ),
-                        "payed_at": (
-                            transaction.payed_at.isoformat()
-                            if transaction.payed_at
-                            else None
-                        ),
-                        "received_at": (
-                            transaction.received_at.isoformat()
-                            if transaction.received_at
-                            else None
-                        ),
-                        "currency": transaction.currency,
-                        "amount": transaction.amount,
-                        "method": transaction.method,
-                        "tracking_id": transaction.tracking_id,
-                        "contractor_id": transaction.contractor_id,
-                    },
-                }
-            ),
+            transaction_schema.dump(transaction),
             200,
         )
 

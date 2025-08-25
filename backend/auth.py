@@ -15,7 +15,7 @@ token_auth = HTTPTokenAuth()
 @token_auth.verify_token
 def verify_token(access_token):
     # Disable auth for testing user client side
-    if current_app.config["DISABLE_AUTH"]:
+    if current_app.config.get("DISABLE_AUTH", True):
         user = db.session.get(User, 1)
         return user
     if access_token:
