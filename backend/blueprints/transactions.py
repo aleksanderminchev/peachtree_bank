@@ -15,6 +15,8 @@ from datetime import datetime
 
 transactions = Blueprint("transactions", __name__)
 
+transaction_schema = TransactionSchema()
+
 
 @transactions.route("/add_transaction", methods=["POST"])
 @body(AddTransactionSchema)
@@ -35,22 +37,29 @@ def add_transaction(data):
         contractor_id = data.get("contractor_id")
         contractor_name = data.get("contractor_name")
         amount = data.get("amount")
-
-        contractor = Contractor.query.get(contractor_id)
+        if contractor_id:
+            print("brebre")
+            contractor = Contractor.query.get(contractor_id)
+        else:
+            contractor = Contractor.find_by_name(contractor_name)
+            print(contractor)
         if not contractor:
             contractor = Contractor(name=contractor_name)
-
+            db.session.add(contractor)
+            db.session.commit()
         currency = data.get("currency", CurrencyEnum.USD.value)
         method = data.get("method", MethodEnum.TRANSACTION.value)
 
         # Generate tracking_id
-        unique_string = f"{data['contractor_id']}_{data['amount']}_{get_date().isoformat()}_{uuid.uuid4()}"
+        unique_string = (
+            f"{contractor.uid}_{amount}_{get_date().isoformat()}_{uuid.uuid4()}"
+        )
         tracking_id = hashlib.sha256(unique_string.encode()).hexdigest()
-
+        print("berb")
         # Create new transaction
         transaction = Transaction(
-            contractor_id=data["contractor_id"],
-            amount=amount,
+            contractor_id=contractor.uid,
+            amount=-amount,
             currency=currency,
             method=method,
             tracking_id=data.get("tracking_id", tracking_id),
@@ -62,47 +71,7 @@ def add_transaction(data):
         db.session.commit()
 
         return (
-            jsonify(
-                {
-                    "message": "Transaction created successfully",
-                    "transaction": {
-                        "uid": transaction.uid,
-                        "status": transaction.status.value,
-                        "amount": transaction.amount,
-                        "currency": transaction.currency.value,
-                        "method": transaction.method.value,
-                        "contractor": (
-                            {
-                                "uid": transaction.contractor.uid,
-                                "name": transaction.contractor.name,
-                            }
-                            if transaction.contractor
-                            else None
-                        ),
-                        "tracking_id": transaction.tracking_id,
-                        "created_at": (
-                            transaction.created_at.isoformat()
-                            if transaction.created_at
-                            else None
-                        ),
-                        "received_at": (
-                            transaction.received_at.isoformat()
-                            if transaction.received_at
-                            else None
-                        ),
-                        "sent_at": (
-                            transaction.sent_at.isoformat()
-                            if transaction.sent_at
-                            else None
-                        ),
-                        "payed_at": (
-                            transaction.payed_at.isoformat()
-                            if transaction.payed_at
-                            else None
-                        ),
-                    },
-                }
-            ),
+            transaction_schema.dump(transaction),
             201,
         )
 
@@ -117,11 +86,10 @@ def get_transaction(id):
     Get a single transaction by ID
     """
     try:
-        schema = TransactionSchema()
-        print(id)
+
         transaction = Transaction.get_transaction_by_id(id)
         if transaction:
-            return (schema.dump(transaction), 200)
+            return (transaction_schema.dump(transaction), 200)
         else:
             return {"error": "No transaction found"}, 404
     except Exception as e:

@@ -17,4 +17,4 @@ class Contractor(BaseModel):
 
     @staticmethod
     def find_by_name(name):
-        return Contractor.query.filter(Contractor.name == f"%{name}%").first()
+        return Contractor.query.filter(Contractor.name == name).first()
